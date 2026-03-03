@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIR4 Boss Mission Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1d; color: #e0e0e0; padding: 20px; max-width: 1100px; margin: auto; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #c19a6b; padding-bottom: 10px; }
+        h2 { color: #c19a6b; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        
+        /* Filter Section Styling */
+        .filter-container { display: flex; gap: 15px; margin-bottom: 20px; background: #25252b; padding: 15px; border-radius: 8px; border: 1px solid #444; }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 0.8rem; color: #c19a6b; font-weight: bold; text-transform: uppercase; }
+        select { background: #1a1a1d; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; min-width: 150px; cursor: pointer; }
+        select:focus { border-color: #c19a6b; outline: none; }
+
+        .reset-btn { background-color: #8b0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.3s; }
+        .reset-btn:hover { background-color: #ff4d4d; }
+
+        table { width: 100%; border-collapse: collapse; background-color: #25252b; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        th { background-color: #333339; color: #c19a6b; padding: 12px; text-align: left; border-bottom: 2px solid #444; }
+        td { padding: 12px; border-bottom: 1px solid #444; }
+        tr:hover { background-color: #2d2d35; }
+        
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; display: inline-block; min-width: 80px; text-align: center; }
+        .pending { background-color: #634721; color: #fff; }
+        .completed { background-color: #2e7d32; color: #fff; }
+        
+        input[type="checkbox"] { transform: scale(1.5); cursor: pointer; }
+        .location { color: #88c0d0; }
+        .area-tag { color: #a3be8c; font-weight: bold; }
+        .type-tag { color: #ebcb8b; font-style: italic; font-size: 0.9em; }
+        .cycle-tag { color: #ebcb8b; font-style: bold; font-size: 0.7em; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h2>MIR4 Boss Mission Tracker</h2>
+        <button class="reset-btn" onclick="resetAll()">RESET ALL</button>
+    </div>
+
+    <div class="filter-container">
+        <div class="filter-group">
+            <label>Boss Category</label>
+            <select id="filter-method" onchange="renderTable()">
+                <option value="All">All</option>
+                <option value="Spawn">Spawn</option>
+                <option value="Summon">Summon</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Quest Cycle</label>
+            <select id="filter-cycle" onchange="renderTable()">
+                <option value="All">All</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Map Area</label>
+            <select id="filter-map" onchange="renderTable()">
+                <option value="All">All</option>
+                </select>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Boss Name</th>
+                <th>Map Area</th>
+                <th>Location</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Done</th>
+            </tr>
+        </thead>
+        <tbody id="boss-list"></tbody>
+    </table>
+
+    <script>
+        // Added 'area' property for your 3rd combo box
+        const bosses = [
+            { id: 1, name: "Celestial Dragon Water Larva", area: "Phantasia Desert", loc: "Phantasia Desert", type: "Summon", cycle: "Weekly" },
+// Mirage Ship            
+            { id: 2, name: "Karark", area: "Mirage Ship", loc: "World of Void", type: "Spawn", cycle: "Weekly" },
+// Layer 3 World 1
+            { id: 3, name: "Mata", area: "Mirage Ship Layer 3 World 1", loc: "W1 Bullface Forest", type: "Spawn", cycle: "Weekly" },
+            { id: 4, name: "Boltox", area: "Mirage Ship Layer 3 World 1", loc: "W1 Demon Bull Temple 1F", type: "Spawn", cycle: "Weekly" },
+            { id: 5, name: "Bullface Fiend King", area: "Mirage Ship Layer 3 World 1", loc: "W1 Bullface Fiend King's Sanctuary", type: "Spawn", cycle: "Weekly" },
+// Layer 3 World 8
+            { id: 6, name: "Viper Queen", area: "Mirage Ship Layer 3 World 8", loc: "W8 Pakua Stonehall", type: "Summon", cycle: "Weekly" },
+            { id: 7, name: "Arahan", area: "Mirage Ship Layer 3 World 8", loc: "W8 Pakua Stonehall", type: "Summon", cycle: "Weekly" },
+            { id: 8, name: "Arahan", area: "Mirage Ship Layer 3 World 8", loc: "W8 Pakua Stonehall", type: "Summon", cycle: "Weekly" },
+            { id: 9, name: "Etherbolt", area: "Mirage Ship Layer 3 World 8", loc: "W8 Abandoned Mine 3F", type: "Summon", cycle: "Weekly" },
+            { id: 10, name: "Terragod", area: "Mirage Ship Layer 3 World 8", loc: "W8 Abandoned Mine 3F", type: "Summon", cycle: "Weekly" },
+            { id: 11, name: "First Elder Crimsonmaur", area: "Mirage Ship Layer 3 World 8", loc: "W8 Abandoned Mine 3F", type: "Summon", cycle: "Weekly" },
+            { id: 12, name: "Yeo Wihuang", area: "Mirage Ship Layer 3 World 8", loc: "W8 Whitemaur Sealing Circle", type: "Spawn", cycle: "Weekly" },
+// Layer 3 World 7
+            { id: 13, name: "Taehyul", area: "Mirage Ship Layer 3 World 7", loc: "W7 Taehyul's Garden", type: "Spawn", cycle: "Weekly" },
+            { id: 14, name: "Redmoon Ghost Wolf", area: "Mirage Ship Layer 3 World 7", loc: "W7 Redmoon Gorge 2F", type: "Summon", cycle: "Weekly" },
+            { id: 15, name: "Yiun", area: "Mirage Ship Layer 3 World 7", loc: "W7 Demonic Cult Main Hall", type: "Spawn", cycle: "Weekly" },
+            { id: 16, name: "Empowered Gorefiend", area: "Mirage Ship Layer 3 World 7", loc: "W7 Redmoon Gorge 3F", type: "Summon", cycle: "Weekly" },
+            { id: 17, name: "Rotten Joduk", area: "Mirage Ship Layer 3 World 7", loc: "W7 Underground Jail", type: "Summon", cycle: "Weekly" },
+// Layer 3 World 4
+            { id: 18, name: "Nefariox Adamant Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Sabuk Town", type: "Summon", cycle: "Weekly" },
+            { id: 19, name: "Nefariox Obdurate Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Phantasia Desert", type: "Spawn", cycle: "Weekly" },
+            { id: 20, name: "Nefariox Thunderclap Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Bladehaven 1F", type: "Summon", cycle: "Weekly" },
+            { id: 21, name: "Nefariox Divine Draconic Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Bladehaven 2F", type: "Summon", cycle: "Weekly" },
+            { id: 22, name: "Kurilaica", area: "Mirage Ship Layer 3 World 4", loc: "W4 Overlord Sealing Circle", type: "Spawn", cycle: "Weekly" },
+            { id: 23, name: "Dark Blood Monk", area: "Mirage Ship Layer 3 World 4", loc: "W4 Dark Blood Monk", type: "Summon", cycle: "Weekly" },
+// Layer 3 World 2
+
+// Layer 3 World 5
+
+// Layer 3 World 3
+
+// Layer 3 World 6
+
+// Layer 1 World 1
+
+// Layer 1 World 2
+
+            // ... Add more bosses here following the same structure
+        ];
+
+        function initFilters() {
+            const mapSelect = document.getElementById('filter-map');
+            // Extract unique areas from the boss list
+            const areas = [...new Set(bosses.map(b => b.area))];
+            
+            areas.forEach(area => {
+                const opt = document.createElement('option');
+                opt.value = area;
+                opt.innerText = area;
+                mapSelect.appendChild(opt);
+            });
+        }
+
+        function renderTable() {
+            const list = document.getElementById('boss-list');
+            const methodVal = document.getElementById('filter-method').value;
+            const cycleVal = document.getElementById('filter-cycle').value;
+            const mapVal = document.getElementById('filter-map').value;
+
+            list.innerHTML = '';
+            
+            const filtered = bosses.filter(boss => {
+                const matchMethod = methodVal === 'All' || boss.type === methodVal;
+                const matchCycle = cycleVal === 'All' || boss.cycle === cycleVal;
+                const matchMap = mapVal === 'All' || boss.area === mapVal;
+                return matchMethod && matchCycle && matchMap;
+            });
+
+            filtered.forEach(boss => {
+                const isCompleted = localStorage.getItem(`boss-${boss.id}`) === 'true';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${boss.name}<br><small class="cycle-tag">${boss.cycle}<small></strong></td>
+                    <td class="area-tag">${boss.area}</td>
+                    <td class="location">${boss.loc}</td>
+                    <td class="type-tag">${boss.type}</td>
+
+                    <td><span class="status-badge ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? 'COMPLETED' : 'PENDING'}</span></td>
+                    <td style="text-align:center;">
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleBoss(${boss.id}, this.checked)">
+                    </td>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function toggleBoss(id, status) {
+            localStorage.setItem(`boss-${id}`, status);
+            renderTable();
+        }
+
+        function resetAll() {
+            if (confirm("Clear all progress?")) {
+                bosses.forEach(boss => localStorage.removeItem(`boss-${boss.id}`));
+                renderTable();
+            }
+        }
+
+        window.onload = () => {
+            initFilters();
+            renderTable();
+        };
+    </script>
+</body>
+</html>
