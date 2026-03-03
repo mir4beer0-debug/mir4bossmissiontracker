@@ -5,169 +5,210 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIR4 Boss Mission Tracker</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1d; color: #e0e0e0; padding: 20px; max-width: 1100px; margin: auto; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1d; color: #e0e0e0; padding: 20px; max-width: 1100px; margin: auto; min-height: 100vh; display: flex; flex-direction: column; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #c19a6b; padding-bottom: 10px; }
         h2 { color: #c19a6b; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
         
-        /* Filter Section Styling */
-        .filter-container { display: flex; gap: 15px; margin-bottom: 20px; background: #25252b; padding: 15px; border-radius: 8px; border: 1px solid #444; }
+        input[type="checkbox"] {
+            transform: scale(2.5); /* Increases size by 50% */
+            margin: 10px;          /* Add margin to prevent overlapping nearby text */
+            text-align: center;
+        }
+        /* Fixed Position Drop-down Area */
+        .filter-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 20px; 
+            background: #25252b; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #444; 
+            position: sticky; 
+            top: 10px; 
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
         .filter-group label { font-size: 0.8rem; color: #c19a6b; font-weight: bold; text-transform: uppercase; }
-        select { background: #1a1a1d; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; min-width: 150px; cursor: pointer; }
-        select:focus { border-color: #c19a6b; outline: none; }
+        select { background: #1a1a1d; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; cursor: pointer; }
 
-        .reset-btn { background-color: #8b0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.3s; }
+        .reset-btn { background-color: #8b0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.3s; }
         .reset-btn:hover { background-color: #ff4d4d; }
 
-        table { width: 100%; border-collapse: collapse; background-color: #25252b; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .main-content { flex: 1; }
+        table { width: 100%; border-collapse: collapse; background-color: #25252b; margin-bottom: 40px; }
         th { background-color: #333339; color: #c19a6b; padding: 12px; text-align: left; border-bottom: 2px solid #444; }
         td { padding: 12px; border-bottom: 1px solid #444; }
-        tr:hover { background-color: #2d2d35; }
         
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; display: inline-block; min-width: 80px; text-align: center; }
+        .status-badge { padding: 10px 15px; border-radius: 4px; font-size: 0.8em; font-weight: bold; display: inline-block; min-width: 90px; text-align: center; }
         .pending { background-color: #634721; color: #fff; }
         .completed { background-color: #2e7d32; color: #fff; }
         
-        input[type="checkbox"] { transform: scale(1.5); cursor: pointer; }
-        .location { color: #88c0d0; }
+        /* Timer Styling */
+        .timer-text { font-family: monospace; color: #ff9800; font-weight: bold; display: block; margin-top: 4px; font-size: 1.3em; }
+        .live-status { color: #00ff00; font-weight: bold; animation: blink 1.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
         .area-tag { color: #a3be8c; font-weight: bold; }
         .type-tag { color: #ebcb8b; font-style: italic; font-size: 0.9em; }
-        .cycle-tag { color: #ebcb8b; font-style: bold; font-size: 0.7em; }
+
+        /* Footer Styling */
+        footer { margin-top: auto; padding: 25px; text-align: center; border-top: 1px solid #444; background: #1f1f23; }
+        .footer-text { color: #888; margin-bottom: 10px; font-size: 0.9em; }
+        .donate-btn { color: #c19a6b; text-decoration: none; font-weight: bold; margin: 0 10px; padding: 8px 15px; border: 1px solid #c19a6b; border-radius: 4px; transition: 0.3s; display: inline-block; }
+        .donate-btn:hover { background: #c19a6b; color: #1a1a1d; }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h2>MIR4 Boss Mission Tracker</h2>
-        <button class="reset-btn" onclick="resetAll()">RESET ALL</button>
-    </div>
+    <div class="main-content">
+        <div class="header-container">
+            <h2>MIR4 Boss Mission Tracker</h2>
+            <button class="reset-btn" onclick="resetAll()">RESET PROGRESS</button>
+        </div>
 
-    <div class="filter-container">
-        <div class="filter-group">
-            <label>Boss Category</label>
-            <select id="filter-method" onchange="renderTable()">
-                <option value="All">All</option>
-                <option value="Spawn">Spawn</option>
-                <option value="Summon">Summon</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>Quest Cycle</label>
-            <select id="filter-cycle" onchange="renderTable()">
-                <option value="All">All</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>Map Area</label>
-            <select id="filter-map" onchange="renderTable()">
-                <option value="All">All</option>
+        <div class="filter-container">
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="filter-method" onchange="renderTable()">
+                    <option value="All">All</option>
+                    <option value="Spawn">Spawn Bosses</option>
+                    <option value="Summon">Summon Bosses</option>
                 </select>
+            </div>
+            <div class="filter-group">
+                <label>Map Area</label>
+                <select id="filter-map" onchange="renderTable()">
+                    <option value="All">All Maps</option>
+                </select>
+            </div>
         </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Boss Name</th>
+                    <th>Location</th>
+                    <th>Type / Timer</th>
+                    <th>Status</th>
+                    <th>Done</th>
+                </tr>
+            </thead>
+            <tbody id="boss-list"></tbody>
+        </table>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Boss Name</th>
-                <th>Map Area</th>
-                <th>Location</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Done</th>
-            </tr>
-        </thead>
-        <tbody id="boss-list"></tbody>
-    </table>
+    <footer>
+        <p class="footer-text">Developed for the MIR4 Community. Support the project to keep it updated!</p>
+        <b>WEMIX: mir4goons<br><br><small href="#" class="donate-btn">0x096605352effe89ac90da09a735718096b86bf6c</small><b>
+    </footer>
 
     <script>
-        // Added 'area' property for your 3rd combo box
+        // Use "H:MM" format for the schedule
         const bosses = [
-            { id: 1, name: "Celestial Dragon Water Larva", area: "Phantasia Desert", loc: "Phantasia Desert", type: "Summon", cycle: "Weekly" },
-// Mirage Ship            
-            { id: 2, name: "Karark", area: "Mirage Ship", loc: "World of Void", type: "Spawn", cycle: "Weekly" },
-// Layer 3 World 1
-            { id: 3, name: "Mata", area: "Mirage Ship Layer 3 World 1", loc: "W1 Bullface Forest", type: "Spawn", cycle: "Weekly" },
-            { id: 4, name: "Boltox", area: "Mirage Ship Layer 3 World 1", loc: "W1 Demon Bull Temple 1F", type: "Spawn", cycle: "Weekly" },
-            { id: 5, name: "Bullface Fiend King", area: "Mirage Ship Layer 3 World 1", loc: "W1 Bullface Fiend King's Sanctuary", type: "Spawn", cycle: "Weekly" },
-// Layer 3 World 8
-            { id: 6, name: "Viper Queen", area: "Mirage Ship Layer 3 World 8", loc: "W8 Pakua Stonehall", type: "Summon", cycle: "Weekly" },
-            { id: 7, name: "Arahan", area: "Mirage Ship Layer 3 World 8", loc: "W8 Pakua Stonehall", type: "Summon", cycle: "Weekly" },
-            { id: 8, name: "Arahan", area: "Mirage Ship Layer 3 World 8", loc: "W8 Pakua Stonehall", type: "Summon", cycle: "Weekly" },
-            { id: 9, name: "Etherbolt", area: "Mirage Ship Layer 3 World 8", loc: "W8 Abandoned Mine 3F", type: "Summon", cycle: "Weekly" },
-            { id: 10, name: "Terragod", area: "Mirage Ship Layer 3 World 8", loc: "W8 Abandoned Mine 3F", type: "Summon", cycle: "Weekly" },
-            { id: 11, name: "First Elder Crimsonmaur", area: "Mirage Ship Layer 3 World 8", loc: "W8 Abandoned Mine 3F", type: "Summon", cycle: "Weekly" },
-            { id: 12, name: "Yeo Wihuang", area: "Mirage Ship Layer 3 World 8", loc: "W8 Whitemaur Sealing Circle", type: "Spawn", cycle: "Weekly" },
-// Layer 3 World 7
-            { id: 13, name: "Taehyul", area: "Mirage Ship Layer 3 World 7", loc: "W7 Taehyul's Garden", type: "Spawn", cycle: "Weekly" },
-            { id: 14, name: "Redmoon Ghost Wolf", area: "Mirage Ship Layer 3 World 7", loc: "W7 Redmoon Gorge 2F", type: "Summon", cycle: "Weekly" },
-            { id: 15, name: "Yiun", area: "Mirage Ship Layer 3 World 7", loc: "W7 Demonic Cult Main Hall", type: "Spawn", cycle: "Weekly" },
-            { id: 16, name: "Empowered Gorefiend", area: "Mirage Ship Layer 3 World 7", loc: "W7 Redmoon Gorge 3F", type: "Summon", cycle: "Weekly" },
-            { id: 17, name: "Rotten Joduk", area: "Mirage Ship Layer 3 World 7", loc: "W7 Underground Jail", type: "Summon", cycle: "Weekly" },
-// Layer 3 World 4
-            { id: 18, name: "Nefariox Adamant Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Sabuk Town", type: "Summon", cycle: "Weekly" },
-            { id: 19, name: "Nefariox Obdurate Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Phantasia Desert", type: "Spawn", cycle: "Weekly" },
-            { id: 20, name: "Nefariox Thunderclap Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Bladehaven 1F", type: "Summon", cycle: "Weekly" },
-            { id: 21, name: "Nefariox Divine Draconic Zenith", area: "Mirage Ship Layer 3 World 4", loc: "W4 Bladehaven 2F", type: "Summon", cycle: "Weekly" },
-            { id: 22, name: "Kurilaica", area: "Mirage Ship Layer 3 World 4", loc: "W4 Overlord Sealing Circle", type: "Spawn", cycle: "Weekly" },
-            { id: 23, name: "Dark Blood Monk", area: "Mirage Ship Layer 3 World 4", loc: "W4 Dark Blood Monk", type: "Summon", cycle: "Weekly" },
-// Layer 3 World 2
+            { id: 1, name: "Celestial Water Larva", area: "Phantasia Desert", loc: "Phantasia Desert", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 5, name: "Karark", area: "Mirage Ship Layer 3", loc: "World of Void", type: "Spawn ( Always )", cycle: "Weekly" },
+//World 1
+            { id: 2, name: "Mata", area: "Mirage Ship Layer 3 World 1", loc: "[World 1] Bullface Forest", type: "Spawn", cycle: "Weekly", schedule: ["2:00", "4:00", "6:00", "8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "24:00"] },
+            { id: 3, name: "Boltox", area: "Mirage Ship Layer 3 World 1", loc: "[World 1] Demon Bull Temple 1F", type: "Spawn", cycle: "Weekly", schedule: ["1:00", "3:00", "5:00", "7:00", "9:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"] },
+            { id: 4, name: "Bullface Fiend King", area: "Mirage Ship Layer 3 World 1", loc: "[World 1] Bullface Fiend King's Sanctuary", type: "Spawn", cycle: "Weekly", schedule: ["3:00", "6:00", "9:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
+//World 8
+            { id: 6, name: "Viper Queen", area: "Mirage Ship Layer 3 World 8", loc: "[World 8] Pakua Stonehall", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 7, name: "Arahan", area: "Mirage Ship Layer 3 World 8", loc: "[World 8] Pakua Stonehall", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 8, name: "Etherbolt", area: "Mirage Ship Layer 3 World 8", loc: "[World 8] Abandoned Mine 3F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 9, name: "Terragod", area: "Mirage Ship Layer 3 World 8", loc: "[World 8] Abandoned Mine 3F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 10, name: "First Elder Crimsonmaur", area: "Mirage Ship Layer 3 World 8", loc: "[World 8] Abandoned Mine 3F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 11, name: "Yeo Wihuang", area: "Mirage Ship Layer 3 World 8", loc: "[World 8] Whitemaur Sealing Circle", type: "Spawn", cycle: "Weekly", schedule: ["1:00", "5:00", "9:00", "13:00", "17:00", "21:00"] },
+//World 7
+            { id: 12, name: "Taehyul", area: "Mirage Ship Layer 3 World 7", loc: "[World 7] Taehyul's Garden", type: "Spawn", cycle: "Weekly", schedule: ["1:00", "3:00", "5:00", "7:00", "9:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"] },
+            { id: 13, name: "Redmoon Ghost Wolf", area: "Mirage Ship Layer 3 World 7", loc: "[World 7] Redmoon Gorge 2F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 14, name: "Transformed Yiun", area: "Mirage Ship Layer 3 World 7", loc: "[World 7] Demonic Cult Main Hall", type: "Spawn", cycle: "Weekly", schedule: ["2:00", "5:00", "8:00", "11:00", "14:00", "17:00", "20:00", "23:00"] },
+            { id: 15, name: "Empowered Gorefiend", area: "Mirage Ship Layer 3 World 7", loc: "[World 7] Redmoon Gorge 3F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 16, name: "Rotten Judok", area: "Mirage Ship Layer 3 World 7", loc: "[World 7] Underground Jail", type: "Summon", cycle: "Weekly", schedule: [] },
+//World 4
+            { id: 17, name: "Nefariox Adamant Zenith", area: "Mirage Ship Layer 3 World 4", loc: "[World 4] Sabuk Town", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 18, name: "Nefariox Obdurate Zenith", area: "Mirage Ship Layer 3 World 4", loc: "[World 4] Phantasia Desert", type: "Spawn", cycle: "Weekly", schedule: ["2:00", "5:00", "8:00", "11:00", "14:00", "17:00", "20:00", "23:00"] },
+            { id: 19, name: "Nefariox Thunderclap Zenith", area: "Mirage Ship Layer 3 World 4", loc: "[World 4] Bladehaven 1F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 20, name: "Nefariox Divine Draconic Zenith", area: "Mirage Ship Layer 3 World 4", loc: "[World 4] Bladehaven 2F", type: "Summon", cycle: "Weekly", schedule: [] },
+            { id: 21, name: "Kurilaica", area: "Mirage Ship Layer 3 World 4", loc: "[World 4] Overlord Sealing Circle", type: "Spawn", cycle: "Weekly", schedule: ["3:00", "6:00", "9:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
+            { id: 22, name: "Dark Blood Monk", area: "Mirage Ship Layer 3 World 4", loc: "[World 4] Dark Blood Monk", type: "Summon", cycle: "Weekly", schedule: [] },
+//World 2
+            { id: 23, name: "Ma Wonwi", area: "Mirage Ship Layer 3 World 2", loc: "[World 2] Seocheon Trading Post", type: "Spawn ( Kill 7k-8k Monsters )", cycle: "Weekly" },
+            { id: 24, name: "Juhui", area: "Mirage Ship Layer 3 World 2", loc: "[World 2] Redmoon Mountain", type: "Spawn", cycle: "Weekly", schedule: ["2:30", "5:30", "8:30", "11:30", "14:30", "17:30", "20:30", "23:30"] },
+//World 5
+            { id: 25, name: "Illusory Dream", area: "Mirage Ship Layer 3 World 5", loc: "[World 5] Nine Dragon Ice Field", type: "Spawn ( Kill 7k-8k Monsters )", cycle: "Weekly" },
+            { id: 26, name: "Faluk", area: "Mirage Ship Layer 3 World 5", loc: "[World 5] Great Sabuk Wall", type: "Spawn", cycle: "Weekly", schedule: ["3:30", "6:30", "9:30", "12:30", "15:30", "18:30", "21:30", "24:30"] },
+            { id: 27, name: "Tale Warper Fiend", area: "Mirage Ship Layer 3 World 5", loc: "[World 5] Illusion Temple", type: "Spawn", cycle: "Weekly", schedule: ["1:30", "4:30", "7:30", "10:30", "13:30", "16:30", "19:30", "22:30"] },
+//World 3
 
-// Layer 3 World 5
+//World 6
 
-// Layer 3 World 3
-
-// Layer 3 World 6
-
-// Layer 1 World 1
-
-// Layer 1 World 2
-
-            // ... Add more bosses here following the same structure
         ];
+
+        function getCountdown(schedule) {
+            if (!schedule || schedule.length === 0) return null;
+            
+            const now = new Date();
+            const nowTime = now.getHours() * 60 + now.getMinutes();
+            
+            let nextSpawn = null;
+            let minDiff = Infinity;
+
+            schedule.forEach(timeStr => {
+                const [h, m] = timeStr.split(':').map(Number);
+                const spawnTime = h * 60 + m;
+                
+                // If it spawned within the last 5 minutes
+                if (nowTime >= spawnTime && nowTime <= spawnTime + 5) {
+                    nextSpawn = "LIVE";
+                }
+
+                let diff = spawnTime - nowTime;
+                if (diff <= 0) diff += 1440; // Add 24 hours in minutes
+                
+                if (diff < minDiff && nextSpawn !== "LIVE") {
+                    minDiff = diff;
+                }
+            });
+
+            if (nextSpawn === "LIVE") return '<span class="live-status">SPAWNED NOW!</span>';
+
+            const h = Math.floor(minDiff / 60);
+            const m = minDiff % 60;
+            const s = 60 - now.getSeconds();
+            return `Next: ${h}h ${m}m ${s}s`;
+        }
 
         function initFilters() {
             const mapSelect = document.getElementById('filter-map');
-            // Extract unique areas from the boss list
             const areas = [...new Set(bosses.map(b => b.area))];
-            
             areas.forEach(area => {
                 const opt = document.createElement('option');
-                opt.value = area;
-                opt.innerText = area;
+                opt.value = area; opt.innerText = area;
                 mapSelect.appendChild(opt);
             });
         }
 
         function renderTable() {
             const list = document.getElementById('boss-list');
-            const methodVal = document.getElementById('filter-method').value;
-            const cycleVal = document.getElementById('filter-cycle').value;
-            const mapVal = document.getElementById('filter-map').value;
+            const cat = document.getElementById('filter-method').value;
+            const map = document.getElementById('filter-map').value;
 
             list.innerHTML = '';
             
-            const filtered = bosses.filter(boss => {
-                const matchMethod = methodVal === 'All' || boss.type === methodVal;
-                const matchCycle = cycleVal === 'All' || boss.cycle === cycleVal;
-                const matchMap = mapVal === 'All' || boss.area === mapVal;
-                return matchMethod && matchCycle && matchMap;
-            });
-
-            filtered.forEach(boss => {
+            bosses.filter(b => (cat === 'All' || b.type === cat) && (map === 'All' || b.area === map))
+            .forEach(boss => {
                 const isCompleted = localStorage.getItem(`boss-${boss.id}`) === 'true';
+                const timer = getCountdown(boss.schedule);
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><strong>${boss.name}<br><small class="cycle-tag">${boss.cycle}<small></strong></td>
-                    <td class="area-tag">${boss.area}</td>
-                    <td class="location">${boss.loc}</td>
-                    <td class="type-tag">${boss.type}</td>
-
-                    <td><span class="status-badge ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? 'COMPLETED' : 'PENDING'}</span></td>
-                    <td style="text-align:center;">
-                        <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleBoss(${boss.id}, this.checked)">
-                    </td>
+                    <td><strong>${boss.name}</strong><br><small>${boss.cycle}</small></td>
+                    <td><span class="area-tag">${boss.area}</span><br><small>${boss.loc}</small></td>
+                    <td class="type-tag">${boss.type} ${timer ? `<span class="timer-text">${timer}</span>` : ''}</td>
+                    <td><span class="status-badge ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? 'DONE' : 'PENDING'}</span></td>
+                    <td><input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleBoss(${boss.id}, this.checked)"></td>
                 `;
                 list.appendChild(row);
             });
@@ -179,8 +220,8 @@
         }
 
         function resetAll() {
-            if (confirm("Clear all progress?")) {
-                bosses.forEach(boss => localStorage.removeItem(`boss-${boss.id}`));
+            if (confirm("Reset all boss progress?")) {
+                bosses.forEach(b => localStorage.removeItem(`boss-${b.id}`));
                 renderTable();
             }
         }
@@ -188,6 +229,7 @@
         window.onload = () => {
             initFilters();
             renderTable();
+            setInterval(renderTable, 1000); 
         };
     </script>
 </body>
